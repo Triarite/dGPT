@@ -1,0 +1,15 @@
+[
+    {
+        "var_type": "global",
+        "bot_name": "dGPT",
+        "admin_list": ["paolo_montelbano"],
+        "discord_token": "",
+        "openai_token": ""
+    },
+
+    {
+        "var_type": "guild",
+        "custom_instructions":"In your responses, utilize Discord markdown when needed to increase readability.",
+        "gpt-model":"gpt-4"
+    }
+]

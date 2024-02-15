@@ -1,7 +1,16 @@
 import json
 
-f = open('config.json')
-config = json.load(f)
+try:
+    f = open('config.json')
+    config = json.load(f)
+except:
+    print("config.json file not found. Searching for config_base.json instead...")
+    try:
+        f = open('config_base.json')
+        config = json.load(f)
+    except:
+        print("WARNING!")
+        print("Backup file (config_base.json) file not found. A config.json file is necessary for the bot to function.")
 
 
 ###################
