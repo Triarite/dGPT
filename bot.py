@@ -22,16 +22,16 @@ client = OpenAI(
 async def on_ready(): # Do NOT include automatic bot syncing here. Liable to harsh rate-limits
     print(f'Logged in as {bot.user.name}')
 
-def getCategory(member, catname):
-    category = discord.utils.get(member.guild.categories, name=catname)
+def getCategory(interaction_user: discord.Interaction.user, category_name: str):
+    category = discord.utils.get(interaction_user.guild.categories, name=category_name)
     return category
 
-def getVoiceChannel(member, channelname):
-    voice_channel = discord.utils.get(member.guild.voice_channels, name=channelname)
+def getVoiceChannel(interaction_user: discord.Interaction.user, channel_name: str):
+    voice_channel = discord.utils.get(interaction_user.guild.voice_channels, name=channel_name)
     return voice_channel
 
-def getTextChannel(member, channelname):
-    text_channel = discord.utils.get(member.guild.text_channels, name=channelname)
+def getTextChannel(interaction_user: discord.Interaction.user, channel_name: str):
+    text_channel = discord.utils.get(interaction_user.guild.text_channels, name=channel_name)
     return text_channel
 
 

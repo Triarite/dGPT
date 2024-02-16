@@ -1,5 +1,7 @@
 # dGPT
-dGPT is a bot that uses Discord as a substitute interface over ChatGPT, primarily for the purposes of using API pricing over a monthly subscription. Right now this is an open-source project for self-hosting, however I may be creating a version of the bot that is compatible with multiple guilds that is accessible for a fee. This possible version of the bot will *not* be open-source.
+dGPT is a bot that uses Discord as a substitute interface over ChatGPT, primarily for the purposes of using API pricing over a monthly subscription. Right now this is an open-source project for self-hosting, however I may be creating an independently-hosted version of the bot compatible with multiple guilds, which would be accessible for a fee. This possible version of the bot would *not* be open-source.
+
+Depends on the `discord`, `typing`, and `os` modules.
 
 ## Commands
 - **/setup**
