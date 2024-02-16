@@ -34,7 +34,7 @@ else:
 # This is used primarily to determine the name of the server during setup
 bot_name = config[0]['bot_name']
 if bot_name:
-    print("Bot name loaded.")
+    print("Bot name loaded:", bot_name)
 else:
     print("Bot name not found, defaulting to dGPT.")
     bot_name = "dGPT"

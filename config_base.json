@@ -9,7 +9,7 @@
 
     {
         "var_type": "guild",
-        "custom_instructions":"In your responses, utilize Discord markdown when needed to increase readability.",
+        "custom_instructions":"In your responses, utilize Discord markdown when needed to increase readability. KEEP YOUR ANSWERS UNDER 2000 CHARACTERS!",
         "gpt-model":"gpt-4"
     }
 ]

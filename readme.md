@@ -15,13 +15,13 @@ dGPT is a bot that uses Discord as a substitute interface over ChatGPT, primaril
 
 
 ## Should I use dGPT?
-YES, if you want to:
+**YES**, if you want to:
 - Input and output fewer than 250,000 words per month (otherwise purchase a subscription, it's more cost-effective)
 - Use ChatGPT within Discord
 - Host the bot for just yourself and friends
 - Customize your experience of the bot
 
-NO, if you want to:
+**NO**, if you want to:
 - Host for multiple guilds on one bot instance
 - Host on servers with people you don't trust
 - Host on large servers
@@ -40,3 +40,9 @@ NO, if you want to:
 - Close thread command
 - Settings page to change custom instructions, GPT model
 - Setup given any server layout
+- Custom server logo
+- Read and respond to text files
+
+## Known Issues
+- Messages from dGPT over 2,000 characters will not send, and instead throw an error
+

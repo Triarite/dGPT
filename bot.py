@@ -134,7 +134,10 @@ async def new_chat(interaction: discord.Interaction, prompt: typing.Optional[str
 
         print("Received message from user. Sending API call...")
         response = await getGPTResponse(message.channel, prompt)
-        await response_message.edit(content=response)
+        try:
+            await response_message.edit(content=response)
+        except Exception as error:
+            await response_message.edit(content=error)
     else: # If no prompt is given
         thread = await interaction.channel.create_thread(name="New Thread", type=discord.ChannelType.public_thread)
         message = await thread.send(interaction.user.mention)
@@ -166,7 +169,7 @@ async def getGPTResponse(thread: discord.Thread, prompt: typing.Optional[str]):
                 "content": prompt
             }
         )
-        if len(prompt) > 51:
+        if len(prompt) > 51: # Checks to truncate prompt
             print(f"Initial prompt passed from user: {prompt[0:51]}...")
         else:
             print(f"Initial prompt passed from user: {prompt}")
@@ -178,7 +181,6 @@ async def getGPTResponse(thread: discord.Thread, prompt: typing.Optional[str]):
                     "content": message.content # Content of user's message
                 }
             )
-            print(f"Message grabbed from user {message.author}: {message.content[0:31]}...")
         else: # If bot message
             if message.content != ":hourglass:" and message.content != "Awaiting prompt...": # Ensures it's not a placeholer message being passed
                 messages_list.append(
@@ -187,7 +189,7 @@ async def getGPTResponse(thread: discord.Thread, prompt: typing.Optional[str]):
                     "content": message.content # Content of bot's message
                     }
                 )
-                print(f"Message grabbed from bot (self): {message.content[0:31]}...")
+                print(f"Message grabbed from bot (self): {message.content[0:51]}...")
 
     
     chat_completion = client.chat.completions.create(
@@ -197,12 +199,27 @@ async def getGPTResponse(thread: discord.Thread, prompt: typing.Optional[str]):
             "content": custom_instructions,
         }
     ] + messages_list,
-    model="gpt-4",
+    model="gpt-4-turbo-preview",
     )
-        
+
     output = (chat_completion.choices[0].message.content)
+    output = formatGPTResponse(output)
     print("OpenAI API call received.")
     return output
+
+async def formatGPTResponse(content):
+    if content > 2000: # Checks if content is within character limit
+        messages = []
+        while len(content) > 0:
+            # Split the content into a message of max_length or less
+            message_part = content[:2000]
+            # Update the remaining content
+            content = content[2000:]
+            # Append the message part to the messages list
+            messages.append(message_part)
+        return messages # Returns array of messages to be sent
+    else:
+        return content # Returns content
 
 
 class ClearConfirm(discord.ui.View):
@@ -222,40 +239,6 @@ class ClearConfirm(discord.ui.View):
         await interaction.response.edit_message(content="Cancelled.", view=None)
         self.stop()
 
-@bot.tree.command(name='clear', description="Deletes all active and archived threads.")
-async def clear(interaction: discord.Interaction):
-    view = ClearConfirm()
-    threads_list = []
-    archived_threads_list = []
-    print(f"{interaction.user} used command clear")
-    if interaction.channel.type == discord.ChannelType.public_thread:
-        await interaction.response.send_message(content="Please use this command in the main channel, not a thread.")
-    else:
-        for i in interaction.channel.threads:
-            threads_list.append(i.name)
-        async for i in interaction.channel.archived_threads():
-            archived_threads_list.append(i.name)
-        
-        if threads_list == [] and archived_threads_list == []:
-            await interaction.response.send_message("There are no threads to clear.")
-        else:
-            confirm = await interaction.response.send_message(f":warning: Are you sure you want to irrecoverably delete the following threads? :warning:\n**Active Threads:** {threads_list}\n**Archived Threads:** {archived_threads_list}", view=view)
-            await view.wait()
-            if view.value is None:
-                print('Timed out...')
-            elif view.value:
-                print('Clearing all threads...')
-                for i in interaction.channel.threads:
-                    await i.delete()
-                async for i in interaction.channel.archived_threads():
-                    await i.delete()
-            else:
-                print('Cancelling clear command...')
-
-@bot.tree.command(name='close', description="Closes the current thread, archiving but not deleting.")
-async def clear(interaction: discord.Interaction):
-    interaction.response.send_message("This currently doesn't do anything and is yet to be coded.")
-    return
 
 class saveLogDropdown(discord.ui.Select):
     def __init__(self):
@@ -309,6 +292,41 @@ class saveLogView(discord.ui.View):
 
         # Adds the dropdown to our view object.
         self.add_item(saveLogDropdown())
+
+@bot.tree.command(name='clear', description="Deletes all active and archived threads.")
+async def clear(interaction: discord.Interaction):
+    view = ClearConfirm()
+    threads_list = []
+    archived_threads_list = []
+    print(f"{interaction.user} used command clear")
+    if interaction.channel.type == discord.ChannelType.public_thread:
+        await interaction.response.send_message(content="Please use this command in the main channel, not a thread.")
+    else:
+        for i in interaction.channel.threads:
+            threads_list.append(i.name)
+        async for i in interaction.channel.archived_threads():
+            archived_threads_list.append(i.name)
+        
+        if threads_list == [] and archived_threads_list == []:
+            await interaction.response.send_message("There are no threads to clear.")
+        else:
+            confirm = await interaction.response.send_message(f":warning: Are you sure you want to irrecoverably delete the following threads? :warning:\n**Active Threads:** {threads_list}\n**Archived Threads:** {archived_threads_list}", view=view)
+            await view.wait()
+            if view.value is None:
+                print('Timed out...')
+            elif view.value:
+                print('Clearing all threads...')
+                for i in interaction.channel.threads:
+                    await i.delete()
+                async for i in interaction.channel.archived_threads():
+                    await i.delete()
+            else:
+                print('Cancelling clear command...')
+
+@bot.tree.command(name='close', description="Closes the current thread, archiving but not deleting.")
+async def clear(interaction: discord.Interaction):
+    interaction.response.send_message("This currently doesn't do anything and is yet to be coded.")
+    return
 
 @bot.tree.command(name="log", description="Saves a log of the thread as your choice of file.")
 async def log(interaction: discord.Interaction):
