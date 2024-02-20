@@ -35,37 +35,57 @@ def getTextChannel(interaction_user: discord.Interaction.user, channel_name: str
     text_channel = discord.utils.get(interaction_user.guild.text_channels, name=channel_name)
     return text_channel
 
+class SetupConfirm(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.red)
+    async def on_submit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = True
+        await interaction.response.edit_message(content="Setting up server...", view=None)
+        self.stop()
+
+    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.grey)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.value = None
+        await interaction.response.edit_message(content="Cancelled.", view=None)
+        self.stop()
+
 
 # Performs a full server setup, intended for one-time use.
 @bot.tree.command(name="setup", description="One-time use command that autonomously sets up the server for proper usage.")
 async def setup(interaction: discord.Interaction):
-    try:
+    view = SetupConfirm()
+    await interaction.response.send_message("Are you sure you want to set up the server for dGPT? This will **permanently delete all channels and categories**", view=view)
+    await view.wait()
+    if view.value == True:
         try:
-            with open("dgpt logo1.png", 'rb') as f:
-                logo = f.read()
-            logofound = True
-        except FileNotFoundError:
-            logofound = False
-            print("Guild logo file not located. Skipping over...")
+            try:
+                with open("dgpt logo1.png", 'rb') as f:
+                    logo = f.read()
+                logofound = True
+            except FileNotFoundError:
+                logofound = False
+                print("Guild logo file not located. Skipping over...")
+            await interaction.guild.edit(name=bot_name)
+            await interaction.guild.edit(default_notifications=discord.NotificationLevel.only_mentions)
+            if logofound == True:
+                await interaction.guild.edit(icon=logo)
 
-        await interaction.guild.create_voice_channel("New Chat")
-        await interaction.guild.create_voice_channel("Open Settings")
-        await interaction.guild.create_category("Chats")
-        await getCategory(interaction.user, "Chats").create_text_channel("general")
+            for category in interaction.guild.categories:
+                await category.delete()
+            for channel in interaction.guild.channels:
+                await channel.delete()
+                
+            await interaction.guild.create_category("Chats")
+            await getCategory(interaction.user, "Chats").create_text_channel("home")
 
-        await getTextChannel(interaction.user, "general").delete()
-        await getVoiceChannel(interaction.user, "General").delete()
-        await getCategory(interaction.user, "Text Channels").delete()
-        await getCategory(interaction.user, "Voice Channels").delete()
-
-        await interaction.guild.edit(name=bot_name)
-        await interaction.guild.edit(default_notifications=discord.NotificationLevel.only_mentions)
-        if logofound == True:
-            await interaction.guild.edit(icon=logo)
-        print("Setup successful!")
-    except discord.errors.Forbidden:
-        await interaction.channel.send("I don't have the permissions for that operation! Please give me a role with Administrator permissions and try again.")
-
+            
+            print("Setup successful!")
+            await getTextChannel(interaction.user, "home").send("Setup successful!")
+        except discord.errors.Forbidden:
+            await interaction.channel.send("I don't have the permissions for that operation! Please give me a role with Administrator permissions and try again.")
 
 @bot.tree.command(name='sync', description="Used to sync App Commands to all guilds. Usable by those in admin_list manually set by bot owner.")
 async def sync(interaction: discord.Interaction):
@@ -77,49 +97,6 @@ async def sync(interaction: discord.Interaction):
     else:
         print(f"{interaction.user} failed authorization check to sync guilds.")
         await interaction.response.send_message(content="You aren't authorized to use this command.")
-
-
-@bot.event
-async def on_voice_state_update(member: discord.Member, before, after):
-    # Check if the member joined the specific channel
-    if before.channel != after.channel and after.channel is not None and after.channel.name == "New Chat":
-        await member.move_to(None)
-        print(f"{member} clicked 'New Chat'")
-        thread = await getTextChannel(member, "general").create_thread(name="New Thread", type=discord.ChannelType.public_thread)
-        message = await thread.send(member.mention)
-        await message.edit(content="Awaiting prompt...")
-        print(f"User {member.global_name} started a new chat with no prompt.")
-
-        @bot.event
-        async def on_message(message: discord.Message):
-            if message.channel == thread:
-                if message.author.name != bot_name:
-                    await message.channel.send(content=f":hourglass:")
-                    await thread.typing()
-                    print(f"{message.author} provided prompt {message.content}")
-        
-    
-    # Check if the member OPENED the Settings channel
-    if before.channel != after.channel and after.channel is not None and after.channel.name == "Open Settings":
-        await member.move_to(None)
-        print(f"{member} clicked 'Open Settings'")
-        await member.guild.create_category("Settings", position=0)
-        await getCategory(member, "Settings").create_text_channel('settings')
-
-        await getVoiceChannel(member, "Open Settings").delete()
-        await member.guild.create_voice_channel("Close Settings")
-
-        await getTextChannel(member, "settings").send("This is the settings menu. Right now there's nothing to see, but soon you'll be able to pick your GPT model, adjust the custom instructions, .")
-    
-    # Check if the member CLOSED the Settings channel
-    if before.channel != after.channel and after.channel is not None and after.channel.name == "Close Settings":
-        await member.move_to(None)
-        print(f"{member} clicked 'Close Settings'")
-        await getTextChannel(member, "settings").delete()
-        await getCategory(member, "Settings").delete()
-        
-        await getVoiceChannel(member, "Close Settings").delete()
-        await member.guild.create_voice_channel("Open Settings", position=1)
 
 @bot.tree.command(name="new", description="Start a new chat with dGPT. Leave prompt empty if you'd like to specify it after chat creation.")
 async def new_chat(interaction: discord.Interaction, prompt: typing.Optional[str]):
@@ -169,9 +146,8 @@ async def on_message(message: discord.Message):
                 for i in response[1:]:
                     await message.channel.send(content=i)
 
-            
 
-
+# Sends API call
 async def getGPTResponse(thread: discord.Thread, prompt: typing.Optional[str]):
     global chat_completion
     message_history_list = []
@@ -225,6 +201,7 @@ async def getGPTResponse(thread: discord.Thread, prompt: typing.Optional[str]):
         print(f"Output within character limit.")
     return output, withinCharLimit
 
+# Formats response of API call
 async def formatGPTResponse(content):
     if len(content) <= 2000: # Checks if content is within character limit (2,000 or fewer)
         return content, True # Returns string, True = fits within character limit
@@ -238,6 +215,7 @@ async def formatGPTResponse(content):
             # Append the message part to the messages list
             messages.append(message_part)
         return messages, False # Returns array of messages to be sent, False = doesn't fit within character limit
+
 
 
 class ClearConfirm(discord.ui.View):
@@ -256,7 +234,6 @@ class ClearConfirm(discord.ui.View):
         self.value = False
         await interaction.response.edit_message(content="Cancelled.", view=None)
         self.stop()
-
 
 class saveLogDropdown(discord.ui.Select):
     def __init__(self):
@@ -359,6 +336,13 @@ async def log(interaction: discord.Interaction):
         await view.wait()
     else:
         await interaction.response.send_message(f"Please use this command in a thread, not the main channel.")
+
+@bot.tree.command(name="settings", description="Opens settings menu in new channel")
+async def settings(interaction: discord.Interaction):
+    if await getCategory(interaction.user, "Settings") != True:
+        await interaction.guild.create_category("Settings", position=0)
+        await getCategory(interaction.user, "Settings").create_text_channel('settings')
+        await getTextChannel(interaction.user, "settings").send("This is the settings menu. Right now there's nothing to see, but soon you'll be able to pick your GPT model, adjust the custom instructions, .")
 
 # Command to start the bot.
 bot.run(discord_token)

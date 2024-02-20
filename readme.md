@@ -40,5 +40,4 @@ Depends on the `discord`, `typing`, and `os` modules.
 
 ## To Be Implemented
 - Settings page to change custom instructions, GPT model
-- Setup given any server layout
 - Read and respond to text files
