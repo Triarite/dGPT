@@ -39,12 +39,6 @@ Depends on the `discord`, `typing`, and `os` modules.
 
 
 ## To Be Implemented
-- Close thread command
 - Settings page to change custom instructions, GPT model
 - Setup given any server layout
-- Custom server logo
 - Read and respond to text files
-
-## Known Issues
-- Messages from dGPT over 2,000 characters will not send, and instead throw an error
-
