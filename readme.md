@@ -20,7 +20,7 @@ Depends on the `discord`, `typing`, and `os` modules.
 **YES**, if you want to:
 - Input and output fewer than 250,000 words per month (otherwise purchase a subscription, it's more cost-effective)
 - Use ChatGPT within Discord
-- Host the bot for just yourself and friends
+- Host the bot for just yourself and/or friends
 - Customize your experience of the bot
 
 **NO**, if you want to:
@@ -34,10 +34,13 @@ Depends on the `discord`, `typing`, and `os` modules.
 1. Download all files
 2. Rename `config_base.json` to `config.json` and open the file
 3. Set the `openai_token` variable to your OpenAI API key and the `discord_token` variable to your Discord bot's token
-4. Create a new server > "For me and my friends" > Give it any random name. *Do NOT change the preset layout*
+4. Create a new server
 5. Invite the bot and use /setup
 
 
 ## To Be Implemented
 - Settings page to change custom instructions, GPT model
 - Read and respond to text files
+
+## Known issues
+- Messages split to meet character limit between markdown (**, ```, etc.) symbols messes up the intended markdown

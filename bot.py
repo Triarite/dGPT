@@ -80,10 +80,13 @@ async def setup(interaction: discord.Interaction):
                 
             await interaction.guild.create_category("Chats")
             await getCategory(interaction.user, "Chats").create_text_channel("home")
+            await getTextChannel(interaction.user, "home").edit(default_auto_archive_duration=60)
 
             
             print("Setup successful!")
-            await getTextChannel(interaction.user, "home").send("Setup successful!")
+            msg = await getTextChannel(interaction.user, "home").send("Setup successful!")
+            await asyncio.sleep(5)
+            await msg.delete()
         except discord.errors.Forbidden:
             await interaction.channel.send("I don't have the permissions for that operation! Please give me a role with Administrator permissions and try again.")
 
@@ -109,7 +112,8 @@ async def new_chat(interaction: discord.Interaction, prompt: typing.Optional[str
             response_message = await message.edit(content=f":hourglass:")
             await thread.typing()
             print(f"User {interaction.user} started a new chat with prompt: {prompt}")
-            await interaction.response.send_message(thread.jump_url)
+            await interaction.response.send_message("...")
+            await interaction.delete_original_response()
 
             print("Received message from user. Sending API call...")
             response, withinCharLimit = await getGPTResponse(message.channel, prompt)
@@ -124,11 +128,12 @@ async def new_chat(interaction: discord.Interaction, prompt: typing.Optional[str
             message = await thread.send(interaction.user.mention)
             waiting_message = await message.edit(content="Awaiting prompt...")
             print(f"User {interaction.user} started a new chat with no prompt.")
-            await interaction.response.send_message(thread.jump_url)
+            await interaction.response.send_message(content="...")
+            await interaction.delete_original_response()
     else:
-        await interaction.response.edit_message(content="New chats cannot be started in threads.")
-        asyncio.sleep(5)
-        await interaction.response.send_message
+        await interaction.response.send_message(content="New chats cannot be started in threads.")
+        await asyncio.sleep(5)
+        await interaction.delete_original_response()
 
 # Responds to message in public threads
 @bot.event
@@ -228,12 +233,16 @@ class ClearConfirm(discord.ui.View):
         self.value = True
         await interaction.response.edit_message(content="Clearing threads...", view=None)
         self.stop()
+        await asyncio.sleep(5)
+        await interaction.delete_original_response()
 
     @discord.ui.button(label='Cancel', style=discord.ButtonStyle.grey)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = False
         await interaction.response.edit_message(content="Cancelled.", view=None)
         self.stop()
+        await asyncio.sleep(5)
+        await interaction.delete_original_response()
 
 class saveLogDropdown(discord.ui.Select):
     def __init__(self):
