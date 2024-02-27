@@ -57,7 +57,7 @@ class SetupConfirm(discord.ui.View):
 @bot.tree.command(name="setup", description="One-time use command that autonomously sets up the server for proper usage.")
 async def setup(interaction: discord.Interaction):
     view = SetupConfirm()
-    await interaction.response.send_message("Are you sure you want to set up the server for dGPT? This will **permanently delete all channels and categories**", view=view)
+    await interaction.response.send_message("Are you sure you want to set up the server for dGPT? This will **permanently delete all channels and categories.**", view=view)
     await view.wait()
     if view.value == True:
         try:

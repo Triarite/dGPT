@@ -18,7 +18,7 @@ Depends on the `discord`, `typing`, and `os` modules.
 
 ## Should I use dGPT?
 **YES**, if you want to:
-- Input and output fewer than 250,000 words per month (otherwise purchase a subscription, it's more cost-effective)
+- Keep input and output fewer than 250,000 words per month (otherwise purchase a subscription, it's more cost-effective)
 - Use ChatGPT within Discord
 - Host the bot for just yourself and/or friends
 - Customize your experience of the bot
