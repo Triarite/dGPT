@@ -107,22 +107,26 @@ async def new_chat(interaction: discord.Interaction, prompt: typing.Optional[str
     new_thread = True
     if interaction.channel.type != discord.ChannelType.public_thread:
         if prompt: # If prompt is given
-            thread = await interaction.channel.create_thread(name=prompt, type=discord.ChannelType.public_thread)
-            message = await thread.send(interaction.user.mention)
-            response_message = await message.edit(content=f":hourglass:")
-            await thread.typing()
-            print(f"User {interaction.user} started a new chat with prompt: {prompt}")
-            await interaction.response.send_message("...")
-            await interaction.delete_original_response()
+            try:
+                thread = await interaction.channel.create_thread(name=prompt, type=discord.ChannelType.public_thread)
+                message = await thread.send(interaction.user.mention)
+                response_message = await message.edit(content=f":hourglass:")
+                await thread.typing()
+                print(f"User {interaction.user} started a new chat with prompt: {prompt}")
+                await interaction.response.send_message("...")
+                await interaction.delete_original_response()
 
-            print("Received message from user. Sending API call...")
-            response, withinCharLimit = await getGPTResponse(message.channel, prompt)
-            if withinCharLimit == True:
-                await response_message.edit(content=response)
-            else:
-                await response_message.edit(content=response[0])
-                for i in response[1:]:
-                    await message.channel.send(content=i)
+                print("Received message from user. Sending API call...")
+                response, withinCharLimit = await getGPTResponse(message.channel, prompt)
+                if withinCharLimit == True:
+                    await response_message.edit(content=response)
+                else:
+                    await response_message.edit(content=response[0])
+                    for i in response[1:]:
+                        await message.channel.send(content=i)
+            except:
+                await interaction.response.send_message(f"Prompt argument must be under 100 characters. Leave argument empty if you want to give a longer prompt.")
+
         else: # If no prompt is given
             thread = await interaction.channel.create_thread(name="New Thread", type=discord.ChannelType.public_thread)
             message = await thread.send(interaction.user.mention)
